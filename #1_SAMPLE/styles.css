@@ -1,0 +1,438 @@
+:root {
+  color-scheme: light;
+  --bg: #f3f6fb;
+  --bg-accent: #e4ebf7;
+  --surface: rgba(255, 255, 255, 0.88);
+  --surface-strong: #ffffff;
+  --border: rgba(15, 23, 42, 0.1);
+  --text: #111827;
+  --muted: #5b6577;
+  --accent: #2563eb;
+  --accent-strong: #1d4ed8;
+  --danger: #b42318;
+  --shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+  --radius-xl: 28px;
+  --radius-lg: 18px;
+  --radius-md: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.16), transparent 32%),
+    radial-gradient(circle at top right, rgba(15, 23, 42, 0.05), transparent 26%),
+    linear-gradient(180deg, var(--bg), var(--bg-accent));
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+.app-shell {
+  width: min(1100px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 40px 0;
+  display: grid;
+  grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
+  gap: 24px;
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+h1 {
+  margin: 0;
+  max-width: 13ch;
+  font-size: clamp(2.3rem, 4vw, 3.8rem);
+  line-height: 1;
+  letter-spacing: -0.06em;
+}
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow);
+}
+
+.composer {
+  padding: 28px;
+  align-self: start;
+}
+
+.library {
+  padding: 28px;
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.prompt-form {
+  display: grid;
+  gap: 18px;
+  margin-top: 22px;
+}
+
+label {
+  display: grid;
+  gap: 10px;
+}
+
+label span {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+input,
+textarea {
+  width: 100%;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: var(--radius-md);
+  background: var(--surface-strong);
+  color: var(--text);
+  padding: 14px 16px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 180px;
+  line-height: 1.65;
+}
+
+input:focus,
+textarea:focus {
+  border-color: rgba(24, 90, 219, 0.4);
+  box-shadow: 0 0 0 4px rgba(24, 90, 219, 0.12);
+}
+
+.primary-button,
+.delete-button {
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.primary-button {
+  padding: 14px 18px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 16px 30px rgba(24, 90, 219, 0.24);
+  justify-self: start;
+}
+
+.primary-button:hover,
+.delete-button:hover {
+  transform: translateY(-1px);
+}
+
+.primary-button:active,
+.delete-button:active {
+  transform: translateY(0);
+}
+
+.section-header {
+  margin-bottom: 18px;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: -0.03em;
+}
+
+.section-header p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.empty-state {
+  display: grid;
+  place-items: center;
+  min-height: 240px;
+  padding: 24px;
+  border: 1px dashed rgba(15, 23, 42, 0.14);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.56);
+  text-align: center;
+  color: var(--muted);
+}
+
+.prompt-list {
+  display: grid;
+  gap: 16px;
+}
+
+.prompt-card {
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.prompt-card-top {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.prompt-title {
+  margin: 0;
+  font-size: 1.08rem;
+  letter-spacing: -0.02em;
+}
+
+.prompt-preview {
+  margin: 0;
+  word-break: break-word;
+  font-size: 0.96rem;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.notes-block {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.notes-header {
+  margin-bottom: 10px;
+}
+
+.notes-label {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.notes-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.notes-empty {
+  padding: 12px 14px;
+  border: 1px dashed rgba(15, 23, 42, 0.12);
+  border-radius: 12px;
+  color: var(--muted);
+  background: rgba(37, 99, 235, 0.04);
+}
+
+.note-item {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  overflow: hidden;
+}
+
+.note-view,
+.note-edit-panel {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.note-text {
+  margin: 0;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.note-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.note-edit-button,
+.note-delete-button,
+.note-save-button,
+.note-add-button {
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.note-edit-button,
+.note-save-button,
+.note-add-button {
+  padding: 9px 14px;
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--accent-strong);
+}
+
+.note-delete-button {
+  padding: 9px 14px;
+  background: rgba(180, 35, 24, 0.1);
+  color: var(--danger);
+}
+
+.note-edit-button:hover,
+.note-save-button:hover,
+.note-add-button:hover,
+.note-delete-button:hover {
+  transform: translateY(-1px);
+}
+
+.note-input,
+.note-edit-input {
+  width: 100%;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 14px;
+  background: var(--surface-strong);
+  color: var(--text);
+  padding: 12px 14px;
+  resize: vertical;
+  min-height: 84px;
+  line-height: 1.6;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.note-input:focus,
+.note-edit-input:focus {
+  border-color: rgba(24, 90, 219, 0.4);
+  box-shadow: 0 0 0 4px rgba(24, 90, 219, 0.12);
+}
+
+.note-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.rating-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.rating-label,
+.rating-value {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.rating-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.star-button {
+  border: 0;
+  background: transparent;
+  color: #93a1b7;
+  cursor: pointer;
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 4px;
+  border-radius: 8px;
+  transition: transform 0.15s ease, color 0.2s ease, background 0.2s ease;
+}
+
+.star-button:hover {
+  transform: translateY(-1px);
+  background: rgba(37, 99, 235, 0.12);
+}
+
+.star-button:focus-visible {
+  outline: 2px solid rgba(24, 90, 219, 0.45);
+  outline-offset: 2px;
+}
+
+.star-button.is-active {
+  color: #f59e0b;
+}
+
+.delete-button {
+  padding: 10px 14px;
+  background: rgba(180, 35, 24, 0.1);
+  color: var(--danger);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.delete-button:hover {
+  background: rgba(180, 35, 24, 0.16);
+}
+
+.hide {
+  display: none !important;
+}
+
+@media (max-width: 920px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  h1 {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    width: min(100% - 20px, 1160px);
+    padding: 20px 0 32px;
+  }
+
+  .composer,
+  .library {
+    padding: 20px;
+  }
+
+  .prompt-card-top {
+    flex-direction: column;
+  }
+
+  .rating-block {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .primary-button {
+    width: 100%;
+    justify-self: stretch;
+  }
+}

@@ -1,0 +1,28 @@
+Classify the customer rating into neutral, negative or positive.
+
+Text: The product was okay. It worked, but wasn't the easiest to understand how to use.
+Sentiment:
+
+
+CLAUDE :
+
+Looking at the text: "The product was okay. It worked, but wasn't the easiest to understand how to use."
+
+Breaking it down:
+
+"okay" - neutral/mild positive language
+"It worked" - positive (functional)
+"but wasn't the easiest to understand" - negative (criticizes usability/complexity)
+
+Key consideration: The structure uses "but" which shifts focus to the criticism at the end. This is a mixed review, but the final emphasis lands on a pain point (ease of use).
+
+Classification: NEGATIVE
+
+While not harshly negative, this leans negative because:
+
+The customer identifies a concrete problem (difficult to understand)
+The "but" construction emphasizes the drawback
+Despite working, the poor user experience is the takeaway
+"Okay" alone suggests mild satisfaction, but the usability complaint undermines it
+
+This is a soft negative or mixed-leaning-negative review—the kind that suggests the customer might not recommend it or might choose an easier alternative.

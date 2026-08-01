@@ -1,0 +1,30 @@
+A well-structured one-shot prompt for feature implementation should include: 
+1) A user story describing the feature need 
+2) Technical requirements with bullet points
+3) Code structure with examples showing how to implement it
+4) UX considerations for the user interface. This format provides a comprehensive example that guides the AI to respond in the same structured manner.
+
+
+EXAMPLE :
+
+Write an engaging introduction for a blog post about remote work productivity.
+Example:
+Topic: Benefits of morning exercise
+Introduction: "Picture this: It's 6 AM, your alarm goes off, and instead of hitting snooze, you lace up your sneakers. Sound impossible? Here's the thing—those who exercise before breakfast report 23% higher energy levels throughout their workday. But the real secret isn't just the exercise itself; it's what happens to your brain chemistry in those precious morning hours."
+Now write an introduction for: Remote work productivity tips
+
+
+CLAUDE :
+
+Here's an engaging introduction for your remote work productivity blog post:
+
+Picture this: It's 2 PM, you're still in your pajamas, and you've "just quickly checked" Slack seventeen times in the last hour. You set out to have your most productive day yet, but somehow the kitchen keeps calling you, notifications won't stop buzzing, and that deadline suddenly feels very real. Sound familiar? Here's what most remote workers don't realize—40% of people working from home struggle with focus, but not because they lack discipline or motivation. The real issue is that nobody ever taught them how to work differently because they're home. The office had built-in structure; your couch doesn't. The good news? A few strategic shifts—ones that work with your home environment instead of against it—can transform your output in ways traditional productivity advice never could.
+
+This introduction:
+✓ Opens with an immersive, relatable scenario
+✓ Includes a specific statistic (40%)
+✓ Reframes the problem (it's not about willpower—it's about systems)
+✓ Hints at unexpected solutions ahead
+✓ Creates curiosity about what "strategic shifts" you'll reveal
+
+Feel free to adjust the statistic or scenario to match your unique angle!

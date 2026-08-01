@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prompt Library</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="panel composer" aria-labelledby="composer-title">
+        <p class="eyebrow">Prompt Library</p>
+        <h1 id="composer-title">Save reusable prompts locally.</h1>
+
+        <form id="prompt-form" class="prompt-form">
+          <label for="prompt-title">
+            <span>Prompt Title</span>
+            <input id="prompt-title" name="title" type="text" placeholder="e.g. Blog post outline" maxlength="80" required />
+          </label>
+
+          <label for="prompt-content">
+            <span>Prompt Content</span>
+            <textarea id="prompt-content" name="content" placeholder="Write your prompt here..." rows="8" maxlength="2000" required></textarea>
+          </label>
+
+          <button type="submit" class="primary-button">Save Prompt</button>
+        </form>
+      </section>
+
+      <section class="panel library" aria-labelledby="library-title">
+        <div class="section-header">
+          <h2 id="library-title">Saved Prompts</h2>
+          <p>Stored in localStorage on this browser.</p>
+        </div>
+
+        <div id="empty-state" class="empty-state">
+          No prompts saved yet.
+        </div>
+
+        <div id="prompt-list" class="prompt-list" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <template id="prompt-template">
+      <article class="prompt-card">
+        <div class="prompt-card-top">
+          <h3 class="prompt-title"></h3>
+          <button type="button" class="delete-button">Delete</button>
+        </div>
+        <div class="rating-block">
+          <p class="rating-label">Effectiveness</p>
+          <div class="rating-stars" role="radiogroup" aria-label="Rate prompt effectiveness out of 5 stars">
+            <button type="button" class="star-button" data-value="1" role="radio" aria-label="Rate 1 out of 5" aria-checked="false">☆</button>
+            <button type="button" class="star-button" data-value="2" role="radio" aria-label="Rate 2 out of 5" aria-checked="false">☆</button>
+            <button type="button" class="star-button" data-value="3" role="radio" aria-label="Rate 3 out of 5" aria-checked="false">☆</button>
+            <button type="button" class="star-button" data-value="4" role="radio" aria-label="Rate 4 out of 5" aria-checked="false">☆</button>
+            <button type="button" class="star-button" data-value="5" role="radio" aria-label="Rate 5 out of 5" aria-checked="false">☆</button>
+          </div>
+          <p class="rating-value" aria-live="polite">0/5</p>
+        </div>
+        <p class="prompt-preview"></p>
+        <section class="notes-block" aria-label="Prompt notes">
+          <div class="notes-header">
+            <p class="notes-label">Notes</p>
+          </div>
+          <ul class="notes-list" aria-live="polite"></ul>
+          <form class="note-form">
+            <textarea class="note-input" rows="3" maxlength="500" placeholder="Add a note..."></textarea>
+            <button type="submit" class="note-add-button">Add Note</button>
+          </form>
+        </section>
+      </article>
+    </template>
+
+    <template id="note-template">
+      <li class="note-item">
+        <div class="note-view">
+          <p class="note-text"></p>
+          <div class="note-actions">
+            <button type="button" class="note-edit-button">Edit</button>
+            <button type="button" class="note-delete-button">Delete</button>
+          </div>
+        </div>
+        <div class="note-edit-panel hide">
+          <textarea class="note-edit-input" rows="3" maxlength="500"></textarea>
+          <button type="button" class="note-save-button">Save</button>
+        </div>
+      </li>
+    </template>
+
+    <script src="script.js"></script>
+  </body>
+</html>
