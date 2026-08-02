@@ -1,0 +1,38 @@
+EXAMPLE :
+Extract the meeting details from this email.
+Format like this:
+Date: [date]
+Time: [time]
+Location: [location]
+Topic: [topic]
+
+Email: "Let's meet tomorrow at 2 PM in Conference Room B to discuss the Q4 budget."
+
+CLAUDE - 
+Here are the meeting details extracted from the email:
+Date: Tomorrow (specific date not provided)
+Time: 2 PM
+Location: Conference Room B
+Topic: Discuss the Q4 budget
+
+Note: The email uses the relative date "tomorrow" rather than a specific calendar date, so you'd need to know when the email was sent to determine the exact date.
+
+
+
+EXAMPLE:
+"Convert this error into JSON. Return ONLY the JSON, no explanation."
+"Error 404 occurred at 3:45 PM when trying to access /users/profile endpoint"
+
+CLAUDE -
+
+ {
+   "error": {
+     "code": 404,
+     "message": "Error occurred when trying to access /users/profile endpoint",
+     "timestamp": "3:45 PM",
+     "endpoint": "/users/profile"
+   }
+}
+
+
+

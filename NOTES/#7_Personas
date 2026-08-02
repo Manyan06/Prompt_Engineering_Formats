@@ -1,0 +1,759 @@
+## EXAMPLES -
+
+Code review: 'You are a senior engineer focused on security and performance'
+
+Documentation: 'You are a technical writer who prioritizes clarity for beginners'
+
+Debugging: 'You are a systematic debugger who checks assumptions'
+
+Architecture: 'You are a solutions architect who considers scalability’”
+
+
+------------------------------------------------------------------------------------------------------------------
+
+
+
+You are a Senior Engineer with experience building startups from zero to MVP.
+
+Our prompt library currently runs entirely in the browser with localStorage. We're considering making it a production-ready tool that teams can use. Create a comprehensive technical specification that includes:
+
+1. **System Architecture Document** that covers:
+   - Data persistence strategy (evaluate PostgreSQL vs DynamoDB vs Firebase)
+   - Authentication approach (OAuth, magic links, or API keys)
+   - Real-time collaboration requirements
+   - Rate limiting and abuse prevention
+   - Search infrastructure (full-text search vs vector embeddings)
+
+2. **API Design Specification** with:
+   - RESTful endpoints vs GraphQL evaluation
+   - Versioning strategy
+   - Pagination approach for large prompt libraries
+   - Webhook events for integrations
+
+3. **Scaling Projections**:
+   - Start with 100 users → path to 1M users
+   - Cost per user at different tiers
+   - Performance benchmarks to maintain
+
+Use your experience to make opinionated recommendations. Write as if you're presenting to a junior engineering team.
+
+
+
+COPILOT -
+
+# Technical Specification: Production-Ready Prompt Library
+
+## 0. Executive Summary
+
+For an MVP that can grow into a team product, I recommend:
+
+- **PostgreSQL as the system of record**
+- **OAuth + magic links for human users**
+- **API keys for automation and service integrations**
+- **REST APIs first**
+- **Postgres full-text search first, vector search second**
+- **WebSockets only for collaboration features that need live presence or shared editing**
+- **Cursor pagination everywhere**
+- **Versioned webhooks from day one**
+
+This gives us the best balance of simplicity, reliability, and future scaling. It avoids premature complexity from DynamoDB or Firebase while leaving room to add search, collaboration, and multi-tenant scaling without rewriting the product.
+
+---
+
+## 1. System Architecture Document
+
+### 1.1 Goals
+
+- Move from browser-only localStorage to a multi-user SaaS.
+- Support team workspaces, shared prompt libraries, and collaboration.
+- Keep the system easy to operate early, but safe to scale later.
+- Preserve prompt metadata, version history, and auditability.
+
+### 1.2 Proposed Architecture
+
+#### Recommended stack
+
+- **Frontend:** React/Next.js or similar SPA/SSR hybrid
+- **API:** Node.js service layer
+- **Primary database:** PostgreSQL
+- **Cache / rate limiting / queues:** Redis
+- **Search:** PostgreSQL FTS initially, later OpenSearch if needed
+- **Realtime:** WebSockets via a dedicated gateway or managed provider
+- **File/object storage:** S3-compatible storage if attachments or exports are added
+- **Auth provider:** Managed auth service or custom auth layer with OAuth + magic links
+- **Background jobs:** Queue-based worker system for indexing, webhooks, imports, and notifications
+
+### 1.3 Data Persistence Strategy
+
+#### Option 1: PostgreSQL
+
+Best choice for this product.
+
+Why:
+- Strong relational model for users, workspaces, prompts, tags, versions, permissions, and audit logs.
+- Excellent transaction support for import/export, collaboration, and deduplication.
+- Simple to query for admin and analytics use cases.
+- Native support for full-text search.
+- Can support vector search later via `pgvector`.
+
+Tradeoffs:
+- Scaling writes horizontally is harder than NoSQL.
+- Requires schema discipline.
+
+Verdict:
+- **Use PostgreSQL.**
+- It is the right default for a collaborative SaaS with prompt libraries.
+
+#### Option 2: DynamoDB
+
+Useful if the product is heavily event-driven, key-value oriented, and ultra-scale from day one.
+
+Pros:
+- Very high scale.
+- Predictable single-digit millisecond access with proper key design.
+- Low operational burden for specific access patterns.
+
+Cons:
+- Poor fit for complex querying: team libraries, search, filters, analytics, joins, audit trails.
+- Harder to model relational behavior cleanly.
+- More app logic moves into the application layer.
+- Search and collaboration become more complicated.
+
+Verdict:
+- **Not recommended as the primary store** for this product.
+- Consider only if the product later becomes a massive high-throughput event store.
+
+#### Option 3: Firebase
+
+Useful for fast prototype-to-demo workflows.
+
+Pros:
+- Very fast to ship.
+- Built-in auth and realtime features.
+- Low initial engineering effort.
+
+Cons:
+- Vendor lock-in.
+- Query limitations become painful as data model complexity grows.
+- Less control over data integrity and multi-tenant security.
+- Harder to enforce rich permissions and relational constraints.
+
+Verdict:
+- **Good for prototypes, not my recommendation for a team SaaS.**
+
+#### Final recommendation
+
+- **PostgreSQL for prompts, users, workspaces, permissions, versions, notes, and audit logs**
+- **Redis for cache, rate limiting, and temporary collaboration state**
+- **Object storage for exports/imports and attachments**
+- **Optional search index later if scale demands it**
+
+---
+
+### 1.4 Suggested Core Data Model
+
+Minimum entities:
+
+- `users`
+- `workspaces`
+- `workspace_members`
+- `prompts`
+- `prompt_versions`
+- `prompt_tags`
+- `prompt_collaborators`
+- `audit_events`
+- `api_keys`
+- `webhook_subscriptions`
+- `webhook_deliveries`
+
+Important design points:
+
+- Every prompt belongs to a workspace.
+- Prompt visibility should be workspace-scoped by default.
+- Version every meaningful change.
+- Keep prompt metadata immutable where possible and versioned where not.
+- Store audit events separately from business data.
+
+---
+
+### 1.5 Authentication Approach
+
+#### Recommended auth model
+
+Use **three auth methods**, each for a different use case:
+
+- **OAuth** for enterprise/team login
+- **Magic links** for low-friction human login
+- **API keys** for automation and integrations
+
+#### Why this mix works
+
+- OAuth is best for team adoption and enterprise SSO later.
+- Magic links reduce friction for early users and solo creators.
+- API keys allow programmatic access from CI, scripts, and bots.
+
+#### Recommendation by user type
+
+- **Individual users:** magic link or OAuth
+- **Teams:** OAuth, with Google first and Microsoft second
+- **Automation:** API keys tied to a workspace or service account
+
+#### Implementation guidance
+
+- Use short-lived access tokens and refresh tokens where applicable.
+- Hash and store API keys only in masked form.
+- Scope API keys by workspace and permissions.
+- Support revocation and rotation.
+- Add optional MFA later for enterprise plans.
+
+#### My opinionated recommendation
+
+- Start with **Google OAuth + magic links**
+- Add **Microsoft OAuth** early if B2B usage is expected
+- Add **API keys** from the beginning for integrations and automation
+
+---
+
+### 1.6 Real-Time Collaboration Requirements
+
+If collaboration is part of the product vision, define the minimum viable realtime behavior carefully.
+
+#### Collaboration features to support
+
+- Live cursor/presence indicators
+- Simultaneous editing of prompt content
+- Live updates when another user changes title, tags, or notes
+- Conflict resolution for concurrent edits
+- Activity feed showing who changed what
+
+#### Recommendation
+
+For MVP:
+- Start with **presence + optimistic updates**
+- Add **live broadcast updates** for prompt edits
+- Do not attempt Google Docs-level CRDT complexity immediately unless shared editing is core to differentiation
+
+#### Two collaboration models
+
+1. **Simple live sync**
+- Users see updates instantly.
+- Last-write-wins with version conflict warnings.
+- Easier to build and operate.
+
+2. **CRDT / operational transform**
+- Better for simultaneous editing.
+- More complex and not needed unless shared editing is the product’s central feature.
+
+#### Opinionated choice
+
+- Use **simple live sync first**
+- Add CRDT later only if product usage proves collaboration is the top value driver
+
+#### Technical approach
+
+- WebSocket channel per workspace
+- Event types: `prompt.updated`, `prompt.deleted`, `member.joined`, `member.left`, `presence.changed`
+- Persist all real changes in PostgreSQL
+- Use Redis pub/sub or a message bus to fan out events across app instances
+
+---
+
+### 1.7 Rate Limiting and Abuse Prevention
+
+This is mandatory before public release.
+
+#### What to protect
+
+- Login and magic link requests
+- Prompt create/update/delete endpoints
+- Import/export endpoints
+- Search endpoints
+- Webhook deliveries
+- API key endpoints
+
+#### Recommended controls
+
+- **IP-based rate limits**
+- **User-based rate limits**
+- **Workspace-based quotas**
+- **API key quotas**
+- **Burst + sustained thresholds**
+
+#### Abuse prevention measures
+
+- Email domain verification for team invites if needed
+- CAPTCHA or challenge flow on suspicious signup/login behavior
+- Idempotency keys for create/import requests
+- Payload size limits for imports
+- Validation on prompt length, tag count, and metadata fields
+- Audit logging for sensitive operations
+- Webhook retry caps and dead-letter handling
+
+#### Recommendation
+
+- Use **Redis-backed rate limiting**
+- Combine limits by IP, account, and workspace
+- Enforce request body size limits from day one
+- Track suspicious behavior in audit logs
+
+---
+
+### 1.8 Search Infrastructure
+
+#### Option 1: Full-text search
+
+Best first choice.
+
+Pros:
+- Good enough for prompt titles, content, notes, and tags.
+- Works directly in PostgreSQL.
+- Simple to operate.
+- Supports ranking and basic stemming.
+
+Cons:
+- Weaker semantic matching.
+- Not great for “find prompts about onboarding, not necessarily using that exact word.”
+
+#### Option 2: Vector embeddings
+
+Good for semantic retrieval.
+
+Pros:
+- Finds conceptually related prompts.
+- Useful for prompt recommendation, duplication detection, and “similar prompts.”
+- Better UX for natural-language search.
+
+Cons:
+- More infrastructure.
+- Requires embedding generation and storage.
+- More expensive and more moving parts.
+
+#### Recommendation
+
+- Start with **PostgreSQL full-text search**
+- Add **vector embeddings** later for semantic similarity and discovery
+- Do not use vector search as the only search mechanism early
+
+#### Search roadmap
+
+1. **Phase 1**
+- Postgres FTS on title, content, notes, tags
+
+2. **Phase 2**
+- Add embeddings for similarity search and recommendations
+
+3. **Phase 3**
+- If search load grows, consider dedicated search infrastructure like OpenSearch or managed vector search
+
+#### Opinionated choice
+
+- Use **hybrid search eventually**
+- That means exact match + ranking + semantic similarity
+
+---
+
+## 2. API Design Specification
+
+### 2.1 REST vs GraphQL
+
+#### RESTful APIs
+
+Pros:
+- Simpler for teams to build and debug
+- Easier caching
+- Easier webhooks and integrations
+- Better fit for resource-oriented prompt management
+
+Cons:
+- Multiple requests may be needed for some screens
+- Can overfetch or underfetch data
+
+#### GraphQL
+
+Pros:
+- Flexible client-driven queries
+- Useful for complex nested views
+
+Cons:
+- More operational complexity
+- Harder authorization logic
+- More difficult caching and monitoring
+- Often unnecessary for an early-stage SaaS
+
+#### Recommendation
+
+- **Use REST first**
+- Consider GraphQL only if the frontend becomes highly complex and client-driven
+
+#### Opinionated guidance for a junior team
+
+If you are not already sure you need GraphQL, you probably don’t.
+
+---
+
+### 2.2 Versioning Strategy
+
+#### Recommendation
+
+Use URL-based versioning:
+
+- `/api/v1/...`
+
+Why:
+- Explicit and easy to reason about
+- Easy for clients and docs
+- Easy to deprecate older versions gradually
+
+#### Versioning rules
+
+- Introduce breaking changes only in a new major API version.
+- Maintain old versions for a defined deprecation period.
+- Add `Deprecation` and `Sunset` headers when retiring old endpoints.
+- Keep response fields additive where possible.
+
+#### Internal rule
+
+- Never silently change response semantics in-place.
+
+---
+
+### 2.3 Pagination Approach
+
+For large libraries, cursor pagination is the right choice.
+
+#### Use cursor-based pagination
+
+Example:
+- `GET /api/v1/prompts?limit=50&cursor=abc123`
+
+Why:
+- Stable under concurrent writes
+- Better performance than offset pagination at scale
+- Easier to page through large libraries accurately
+
+#### Avoid offset pagination for core lists
+
+Offset pagination:
+- Gets slower as data grows
+- Can skip or duplicate records when data changes
+
+#### Recommendation
+
+- Use cursor pagination for:
+  - prompts
+  - prompt versions
+  - notes
+  - activity feeds
+  - webhook delivery logs
+
+#### Cursor design
+
+- Use opaque cursors
+- Encode sort key + unique ID
+- Prefer `created_at DESC, id DESC` or similar stable ordering
+
+---
+
+### 2.4 Suggested REST Endpoint Surface
+
+#### Authentication
+
+- `POST /api/v1/auth/login-link`
+- `POST /api/v1/auth/oauth/callback`
+- `POST /api/v1/auth/logout`
+- `POST /api/v1/auth/refresh`
+
+#### Workspaces
+
+- `GET /api/v1/workspaces`
+- `POST /api/v1/workspaces`
+- `GET /api/v1/workspaces/{workspaceId}`
+- `PATCH /api/v1/workspaces/{workspaceId}`
+- `POST /api/v1/workspaces/{workspaceId}/members`
+
+#### Prompts
+
+- `GET /api/v1/workspaces/{workspaceId}/prompts`
+- `POST /api/v1/workspaces/{workspaceId}/prompts`
+- `GET /api/v1/prompts/{promptId}`
+- `PATCH /api/v1/prompts/{promptId}`
+- `DELETE /api/v1/prompts/{promptId}`
+
+#### Prompt versions
+
+- `GET /api/v1/prompts/{promptId}/versions`
+- `GET /api/v1/prompts/{promptId}/versions/{versionId}`
+- `POST /api/v1/prompts/{promptId}/revert/{versionId}`
+
+#### Search
+
+- `GET /api/v1/workspaces/{workspaceId}/search?q=...`
+
+#### Imports/exports
+
+- `POST /api/v1/workspaces/{workspaceId}/imports`
+- `GET /api/v1/workspaces/{workspaceId}/exports/{exportId}`
+
+#### Webhooks
+
+- `GET /api/v1/workspaces/{workspaceId}/webhooks`
+- `POST /api/v1/workspaces/{workspaceId}/webhooks`
+- `PATCH /api/v1/webhooks/{webhookId}`
+- `DELETE /api/v1/webhooks/{webhookId}`
+
+---
+
+### 2.5 Webhook Events
+
+Webhooks are important for team adoption and integrations.
+
+#### Recommended events
+
+- `prompt.created`
+- `prompt.updated`
+- `prompt.deleted`
+- `prompt.version.created`
+- `prompt.tagged`
+- `prompt.untagged`
+- `workspace.member_added`
+- `workspace.member_removed`
+- `import.completed`
+- `export.completed`
+
+#### Webhook design rules
+
+- Send event id, event type, created time, workspace id, and resource payload.
+- Deliver events asynchronously.
+- Retry on transient failures.
+- Sign webhook payloads with an HMAC signature.
+- Include idempotency/event IDs so receivers can dedupe.
+
+#### Delivery guarantees
+
+- At-least-once delivery
+- Document that duplicates may occur
+- Provide retry and dead-letter logging
+
+---
+
+## 3. Scaling Projections
+
+### 3.1 Growth Path: 100 Users to 1M Users
+
+#### Stage 1: 100 users
+
+Characteristics:
+- Low operational complexity
+- Small datasets
+- Light traffic
+- Likely dominated by product iteration, not infrastructure
+
+Recommended architecture:
+- Single API service
+- Single PostgreSQL instance
+- Redis for rate limiting and cache
+- Simple background worker
+- Managed auth provider
+
+Goal:
+- Move fast
+- Keep costs low
+- Avoid overengineering
+
+#### Stage 2: 1,000 to 10,000 users
+
+Characteristics:
+- More workspaces
+- More concurrent sessions
+- Search starts to matter
+- More webhook traffic and import/export usage
+
+Recommended changes:
+- Read replicas for PostgreSQL if needed
+- Connection pooling
+- Background job queue
+- Search indexes tuned
+- Introduce object storage for large exports
+- Basic observability and tracing
+
+#### Stage 3: 100,000 users
+
+Characteristics:
+- Database tuning becomes important
+- Search and collaboration traffic increase
+- Webhook delivery needs robust queues and retries
+
+Recommended changes:
+- Partition or archive audit logs
+- Add read replicas
+- Split background workers by responsibility
+- Consider dedicated search infrastructure
+- Add caching for hot libraries and workspace metadata
+- Introduce sharding only if clearly justified
+
+#### Stage 4: 1M users
+
+Characteristics:
+- Multi-region concerns may appear
+- Event throughput and operational automation matter
+- Security, billing, and governance become serious
+
+Recommended changes:
+- More aggressive horizontal scaling of API services
+- Strong cache strategy
+- Dedicated search service if FTS no longer suffices
+- Event-driven architecture for side effects
+- Data retention policies
+- Analytics pipeline
+- Possible read/write workload separation
+
+#### Opinionated note
+
+Do not design for 1M users on day one. Design for the path to 1M users by keeping the boundaries clean:
+- database access through a service layer
+- idempotent background jobs
+- stable event contracts
+- versioned APIs
+
+---
+
+### 3.2 Cost Per User at Different Tiers
+
+These are rough operating estimates, not accounting numbers. Actual cost depends heavily on usage intensity and cloud/provider choice.
+
+#### Tier 1: Solo / small team MVP
+
+- 100 users
+- Cost per user: roughly **$1 to $5/month** equivalent infrastructure cost
+- Main costs:
+  - app hosting
+  - PostgreSQL
+  - auth provider
+  - Redis
+  - basic logging/monitoring
+
+#### Tier 2: Growing team product
+
+- 1,000 to 10,000 users
+- Cost per user: roughly **$0.50 to $2/month**
+- Economies of scale start improving
+- Better caching and more efficient infra reduce per-user cost
+
+#### Tier 3: Large product
+
+- 100,000+ users
+- Cost per user: roughly **$0.10 to $1/month**
+- This assumes usage is reasonably distributed and not extremely storage/search heavy
+
+#### Cost drivers
+
+- Search indexing and query load
+- Realtime collaboration traffic
+- Webhook volume
+- AI/embedding generation if added
+- Audit logging and retention
+- Egress from exports and integrations
+
+#### Recommendation
+
+Track cost per active workspace and per active prompt editor, not just total user count. For this kind of product, workspace-level metrics are more useful.
+
+---
+
+### 3.3 Performance Benchmarks to Maintain
+
+Set explicit SLOs early.
+
+#### API benchmarks
+
+- `p95` read requests under **250 ms**
+- `p95` write requests under **400 ms**
+- Search requests under **300 ms** for typical library sizes
+- Prompt list loads under **1 second** for normal workspace sizes
+
+#### Collaboration benchmarks
+
+- Realtime update propagation under **500 ms**
+- Presence changes under **1 second**
+- Conflict detection immediate on save
+
+#### Import/export benchmarks
+
+- Export of 1,000 prompts under **2 seconds**
+- Import validation of 1,000 prompts under **3 seconds**
+- Large imports should run asynchronously if they exceed small thresholds
+
+#### Reliability benchmarks
+
+- API uptime target: **99.9%** early, then improve as the product matures
+- Webhook delivery retries with clear dead-letter tracking
+- Zero silent data loss on prompt writes
+
+#### Database benchmarks
+
+- Common prompt list queries should be index-backed
+- Search queries should not require full table scans at scale
+- Prompt updates should remain transactional
+
+---
+
+## 4. Recommended MVP-to-Scale Plan
+
+### Phase 1: MVP foundation
+
+- PostgreSQL
+- REST API
+- OAuth + magic links
+- API keys for automation
+- Cursor pagination
+- Postgres full-text search
+- Webhooks
+- Redis rate limiting
+- Versioned prompt data and audit logging
+
+### Phase 2: Team collaboration
+
+- Realtime presence
+- Live prompt updates
+- Activity feed
+- Prompt version history
+- Import/export jobs with backup and rollback
+- Stronger workspace permissions
+
+### Phase 3: Search and intelligence
+
+- Semantic search with embeddings
+- Similar prompt recommendations
+- Duplicate detection
+- Search analytics
+
+### Phase 4: Scale and governance
+
+- Read replicas
+- Queue separation
+- Data retention policies
+- Admin tooling
+- Billing and usage metering
+- Enterprise auth and audit exports
+
+---
+
+## 5. Final Recommendation
+
+If I were leading this team, I would build this as:
+
+- **PostgreSQL-backed SaaS**
+- **REST API with `/api/v1`**
+- **OAuth + magic links + API keys**
+- **Cursor pagination**
+- **Postgres FTS first, embeddings later**
+- **WebSockets for collaboration only where needed**
+- **Redis for rate limiting and background orchestration**
+- **Strict versioning, audit logs, and webhook signatures from day one**
+
+That gives the team the simplest architecture that can still grow into a serious product.
+
+If you want, I can turn this into a more formal engineering doc with:
+1. a system diagram,
+2. a concrete database schema,
+3. and a proposed endpoint list with request/response examples.
